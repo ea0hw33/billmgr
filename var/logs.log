@@ -452,3 +452,63 @@
             JOIN paymethod pm
             WHERE module = 'pmtestpayment' AND p.status = 2
         '[0m
+2024-05-07 20:24:02,223 [179682] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:24:02,223 [179682] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m
+2024-05-07 20:27:01,707 [179902] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:27:01,707 [179902] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m
+2024-05-07 20:30:02,725 [180283] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:30:02,726 [180283] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m
+2024-05-07 20:33:02,126 [180366] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:33:02,127 [180366] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m
+2024-05-07 20:36:01,640 [180491] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:36:01,640 [180491] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m
+2024-05-07 20:39:02,024 [180578] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:39:02,025 [180578] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m
+2024-05-07 20:42:01,628 [180732] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:42:01,628 [180732] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m
+2024-05-07 20:45:02,139 [180858] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:45:02,140 [180858] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m
+2024-05-07 20:48:01,463 [180943] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:48:01,464 [180943] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m
+2024-05-07 20:51:02,020 [181074] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:51:02,021 [181074] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m
