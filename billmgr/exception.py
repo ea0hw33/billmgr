@@ -1,8 +1,10 @@
-import billmgr.logger
 import xml.etree.ElementTree as ET
 import traceback
 
-logger = billmgr.logger.get_logger("billmgr_exception")
+from billmgr.logger import get_logger
+
+
+MODULE = "billmgr_exception"
 
 
 def _backtrace():
@@ -13,7 +15,7 @@ def log_backtrace():
     """
     Добавляет backtrace в файл логов
     """
-    logger.extinfo("%s", _backtrace())
+    get_logger(MODULE).extinfo("%s", _backtrace())
 
 
 class XmlException(Exception):
@@ -34,7 +36,7 @@ class XmlException(Exception):
         message = f"Type: '{self.err_type}' Object: '{self.err_object}' Value: '{self.err_value}'"
         super().__init__(message)
 
-        logger.error("%s", message)
+        get_logger(MODULE).error("%s", message)
 
     def add_param(self, name: str, value: str):
         self.params[name] = value

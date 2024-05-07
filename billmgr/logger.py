@@ -1,4 +1,5 @@
 import logging
+import sys
 from enum import Enum
 from billmgr import BINARY_NAME
 
@@ -14,15 +15,23 @@ class Level(Enum):
 
 def log_level():
     conf_level = Level.EXTINFO.value
-    with open("/etc/debug.conf", "r") as f:
-        for line in f:
-            if line.startswith("#"):
+    try:
+        with open("etc/debug.conf", "r") as f:
+            for line in f:
+                if line.startswith("#"):
                     continue
-            tmp_line = line.replace("\t", " ")
-            if BINARY_NAME + " " in tmp_line:
-                tmp_line = tmp_line.strip()
-                conf_level = int(tmp_line.strip().rsplit(" ", 1)[-1])
-
+                if BINARY_NAME == "":
+                    continue
+                tmp_line = line.replace("\t", " ")
+                if BINARY_NAME in tmp_line:
+                    tmp_line = tmp_line.strip()
+                    tmp_chunks = tmp_line.strip().rsplit(" ", 1)
+                    try:
+                        conf_level = int(tmp_chunks[-1])
+                    except Exception:
+                        pass
+    except:
+        pass
     # Система логирования в COREmanager устроена немного иначе, поэтому задаем таблицу соответствия
     SUPPORTED_LEVELS = {
         9: Level.DEBUG.value,
@@ -30,28 +39,40 @@ def log_level():
         5: Level.INFO.value,
         4: Level.WARNING.value,
         3: Level.ERROR.value,
-        2: Level.CRITICAL.value
+        2: Level.CRITICAL.value,
     }
     return SUPPORTED_LEVELS.get(conf_level, Level.EXTINFO.value)
 
 
-logfile_name = "logs"
+logfile_name = ""
+
+
 def init_logging(logfile: str):
     logging.addLevelName(Level.EXTINFO.value, Level.EXTINFO.name)
     global logfile_name
     logfile_name = logfile
 
 
+__loggers = {}
+
+
 def get_logger(name):
-    return Logger(name)
+    if name not in __loggers:
+        __loggers[name] = Logger(name)
+    return __loggers[name]
 
 
 class Logger:
     def __init__(self, name):
         self.__logger = logging.getLogger(name)
         self.__logger.setLevel(log_level())
-        handler = logging.FileHandler(f"var/{logfile_name}.log")
-        formatter = logging.Formatter('%(asctime)-15s [%(process)d] %(name)s %(color)s %(levelname)s %(message)s\033[0m')
+        if logfile_name:
+            handler = logging.FileHandler(f"/usr/local/mgr5/lib/python/var/logs.log")
+        else:
+            handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter(
+            "%(asctime)-15s [%(process)d] %(name)s %(color)s %(levelname)s %(message)s\033[0m"
+        )
         handler.setFormatter(formatter)
         self.__logger.addHandler(handler)
 
@@ -62,7 +83,7 @@ class Logger:
             Level.INFO: "\033[1;32m",
             Level.WARNING: "\033[1;35m",
             Level.ERROR: "\033[1;31m",
-            Level.CRITICAL: "\033[1;31m"
+            Level.CRITICAL: "\033[1;31m",
         }
 
         self.__logger.log(level.value, msg, *args, extra={"color": COLORS[level]})

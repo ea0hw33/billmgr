@@ -1,0 +1,6 @@
+cryptography==38.0.4
+mysql-connector-python==8.0.29
+setuptools-rust==1.1.2
+pyopenssl==22.1.0
+requests==2.25.1
+

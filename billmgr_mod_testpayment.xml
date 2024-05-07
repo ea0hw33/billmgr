@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mgrdata>
+	<plugin name="pmtestpayment">
+		<group>payment_method</group>
+		<author>BILLmanager team</author>
+		<params>
+			<priority lang="ru">3700</priority>
+			<priority lang="en">1800</priority>
+		</params>
+	</plugin>
+
+	<metadata name="paymethod.edit.testpayment" type="form">
+		<form>
+			<page name="methodprops">
+				<field name="terminalkey">
+					<input type="text" name="terminalkey" private="yes" required="yes" maxlength="20"/>
+				</field>
+				<field name="terminalpsw">
+					<input type="password" name="terminalpsw" private="yes" required="yes"/>
+				</field>
+			</page>
+		</form>
+	</metadata>
+
+	<lang name="ru">
+		<messages name="plugin">
+			<msg name="desc_short_pmtestpayment">Test <![CDATA[<sup><font color="#008000">NEW</font></sup>]]></msg>
+			<msg name="desc_full_pmtestpayment">Платежный модуль Test</msg>
+			<msg name="price_pmtestpayment">Бесплатно</msg>
+		</messages>
+		<messages name="label_paymethod">
+			<msg name="pmtestpayment">Test</msg>
+			<msg name="module_pmtestpayment">Test</msg>
+		</messages>
+		<messages name="paymethod.edit.testpayment">
+			<msg name="terminalkey">Идентификатор терминала</msg>
+			<msg name="terminalpsw">Пароль терминала</msg>
+			<msg name="hint_terminalkey">Идентификатор терминала. Выдается продавцу банком при заведении терминала</msg>
+			<msg name="hint_terminalpsw">Пароль от терминала из личного кабинета</msg>
+		</messages>
+		<messages name="msgerror">
+			<msg name="msg_error_wrong_terminal_info">Введены неверные данные терминала или терминал заблокирован</msg>
+			<msg name="msg_error_payment_fraud">Платёжная система посчитала платёж мошенническим</msg>
+			<msg name="msg_error_no_url_provided">Платёжная система не вернула ссылку оплаты</msg>
+			<msg name="msg_error_no_payment_id_provided">Платёжная система не вернула номер счёта</msg>
+			<msg name="msg_error_status_rejected">Платёжная система отклонила платёж</msg>
+			<msg name="msg_error_repeat_again">Платёжная система в данный момент недоступна. Попробуйте ещё раз позже</msg>
+			<msg name="msg_error_generic_error">Произошла ошибка</msg>
+			<msg name="msg_error_unknown_error">Произошла неизвестная ошибка</msg>
+			<msg name="msg_error_json_parsing_error">Платёжная система вернула неверный ответ</msg>
+			<msg name="msg_error_too_small_min_amount">Минимальная сумма платежа не может быть меньше 1 рубля</msg>
+			<msg name="msg_error_not_enough_money_to_refund">Недостаточно денег в платеже для совершения возврата</msg>
+			<msg name="msg_error_only_support_rubles">Для оплаты поддерживаются только рубли</msg>
+		</messages>
+	</lang>
+</mgrdata>

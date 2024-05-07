@@ -1,144 +1,223 @@
-#!/usr/bin/env python
-import datetime
-import re
+import os
+os.chdir("/usr/local/mgr5")
+
+from abc import ABC, abstractmethod
+from billmgr.misc import MgrctlXml
+import billmgr.db
+import billmgr.exception
+from enum import Enum
 import sys
-import getopt
 import xml.etree.ElementTree as ET
 import billmgr.logger as logging
-import billmgr.db as db
-from lib.python.billmgr.thirdparty import requests
+
+MODULE = 'payment'
+logging.init_logging('pmtestpayment')
+logger = logging.get_logger('pmtestpayment')
 
 
-MODULE = 'Test-pay'
-logging.init_logging('payment')
-logger = logging.get_logger('payment')
+def parse_cookies(rawdata):
+    from http.cookies import SimpleCookie
+    cookie = SimpleCookie()
+    cookie.load(rawdata)
+    return {k: v.value for k, v in cookie.items()}
 
-# Adding PHP include
-sys.path.append("/usr/local/mgr5/lib/python/billmgr")
-__MODULE__ = "pmTest-pay"
 
-class Cgi:
-    def handler(argv):
-        longopts = ["command=", "payment=", "amount="]
+# cтатусы платежей в том виде, в котором они хранятся в БД
+# см. https://docs.ispsystem.ru/bc/razrabotchiku/struktura-bazy-dannyh#id-Структурабазыданных-payment
+class PaymentStatus(Enum):
+    NEW = 1
+    INPAY = 2
+    PAID = 4
+    FRAUD = 7
+    CANCELED = 9
 
+
+# перевести платеж в статус "оплачивается"
+def set_in_pay(payment_id: str, info: str, externalid: str):
+    '''
+    payment_id - id платежа в BILLmanager
+    info       - доп. информация о платеже от платежной системы
+    externalid - внешний id на стороне платежной системы
+    '''
+    MgrctlXml('payment.setinpay', elid=payment_id, info=info, externalid=externalid)
+
+
+# перевести платеж в статус "мошеннический"
+def set_fraud(payment_id: str, info: str, externalid: str):
+    MgrctlXml('payment.setfraud', elid=payment_id, info=info, externalid=externalid)
+
+
+# перевести платеж в статус "оплачен"
+def set_paid(payment_id: str, info: str, externalid: str):
+    MgrctlXml('payment.setpaid', elid=payment_id, info=info, externalid=externalid)
+
+
+# перевести платеж в статус "отменен"
+def set_canceled(payment_id: str, info: str, externalid: str):
+    MgrctlXml('payment.setcanceled', elid=payment_id, info=info, externalid=externalid)
+
+
+class PaymentCgi(ABC):
+    # основной метод работы cgi
+    # абстрактный метод, который необходимо переопределить в конкретной реализации
+    @abstractmethod
+    def Process(self):
+        pass
+
+    def __init__(self):
+        self.elid = ""           # ID платежа
+        self.auth = ""           # токен авторизации
+        self.mgrurl = ""         # url биллинга
+        self.pending_page = ""   # url страницы биллинга с информацией об ожидании зачисления платежа
+        self.fail_page = ""      # url страницы биллинга с информацией о неуспешной оплате
+        self.success_page = ""   # url страницы биллинга с информацией о успешной оплате
+
+        self.payment_params = {}   # параметры платежа
+        self.paymethod_params = {} # параметры метода оплаты
+        self.user_params = {}      # параметры пользователя
+
+        self.lang = None           # язык используемый у клиента
+
+        # пока поддерживаем только http метод GET
+        if os.environ['REQUEST_METHOD'] != 'GET':
+            raise NotImplemented
+
+        # по-умолчанию используется https
+        if os.environ['HTTPS'] != 'on':
+            raise NotImplemented
+
+        # получаем id платежа, он же elid
+        input_str = os.environ['QUERY_STRING']
+        for key, val in [param.split('=') for param in input_str.split('&')]:
+            if key == "elid":
+                self.elid = val
+
+        # получаем url к панели
+        self.mgrurl =  "https://" + os.environ['HTTP_HOST'] + "/billmgr"
+        self.pending_page = f'{self.mgrurl}?func=payment.pending'
+        self.fail_page = f'{self.mgrurl}?func=payment.fail'
+        self.success_page = f'{self.mgrurl}?func=payment.success'
+
+        # получить cookie
+        cookies = parse_cookies(os.environ['HTTP_COOKIE'])
+        _, self.lang = cookies["billmgrlang5"].split(':')
+
+        # получить токен авторизации
+        self.auth = cookies["billmgrses5"]
+
+        # получить параметры платежа и метода оплаты
+        # см. https://docs.ispsystem.ru/bc/razrabotchiku/sozdanie-modulej/sozdanie-modulej-plateyonyh-sistem#id-Созданиемодулейплатежныхсистем-CGIскриптымодуля
+        payment_info_xml = MgrctlXml("payment.info", elid = self.elid, lang = self.lang)
+        for elem in payment_info_xml.findall("./payment/"):
+            self.payment_params[elem.tag] = elem.text
+        for elem in payment_info_xml.findall("./payment/paymethod/"):
+            self.paymethod_params[elem.tag] = elem.text
+        
+        logger.info('paymethod_params= ', self.paymethod_params)  
+        logger.info('payment_params= ',self.payment_params)      
+
+        # получаем параметры пользователя
+        # получаем с помощью функции whoami информацию о авторизованном пользователе
+        # в качестве параметра передаем auth - токен сессии
+        user_node = MgrctlXml("whoami", auth = self.auth).find('./user')
+        if user_node is None:
+            raise billmgr.exception.XmlException("invalid_whoami_result")
+
+        # получаем из бд данные о пользователях
+        user_query = billmgr.db.get_first_record(
+            " SELECT u.*, IFNULL(c.iso2, 'EN') AS country, a.registration_date"
+            " FROM user u"
+			" LEFT JOIN account a ON a.id=u.account"
+			" LEFT JOIN country c ON c.id=a.country"
+			" WHERE u.id = '" +  user_node.attrib['id'] + "'"
+        )
+        if user_query:
+            self.user_params["user_id"] = user_query["id"];
+            self.user_params["phone"] = user_query["phone"];
+            self.user_params["email"] = user_query["email"];
+            self.user_params["realname"] = user_query["realname"];
+            self.user_params["language"] = user_query["language"];
+            self.user_params["country"] = user_query["country"];
+            self.user_params["account_id"] = user_query["account"];
+            self.user_params["account_registration_date"] = user_query["registration_date"];
+
+
+# фичи платежного модуля
+# полный список можно посмотреть в документации
+# https://docs.ispsystem.ru/bc/razrabotchiku/sozdanie-modulej/sozdanie-modulej-plateyonyh-sistem#id-Созданиемодулейплатежныхсистем-Основнойскриптмодуля
+FEATURE_REDIRECT = "redirect"               # нужен ли переход в платёжку для оплаты
+FEATURE_CHECKPAY = "checkpay"               # проверка статуса платежа по крону
+FEATURE_NOT_PROFILE = "notneedprofile"      # оплата без плательщика (позволит зачислить платеж без создания плательщика)
+FEATURE_PMVALIDATE = "pmvalidate"           # проверка введённых данных на форме создания платежной системы
+FEATURE_PMUSERCREATE = "pmusercreate"       # для ссылки на регистрацию в платежке
+
+# параметры платежного модуля
+PAYMENT_PARAM_PAYMENT_SCRIPT = "payment_script" # mancgi/<наименование cgi скрипта>
+
+
+class PaymentModule(ABC):
+    # Абстрактные методы CheckPay и PM_Validate необходимо переопределить в своей реализации
+    # см пример реализации в pmtestpayment.py
+
+    # проверить оплаченные платежи
+    # реализация --command checkpay
+    # здесь делаем запрос в БД, получаем список платежей в статусе "оплачивается"
+    # идем в платежку и проверяем прошли ли платежи
+    # если платеж оплачен, выставляем соответствующий статус c помощью функции set_paid
+    @abstractmethod
+    def CheckPay(self):
+        pass
+
+    # вызывается для проверки введенных в настройках метода оплаты значений
+    # реализация --command pmvalidate
+    # принимается xml с веденными на форме значениями
+    # если есть некорректные значения, то бросаем исключение billmgr.exception.XmlException
+    # если все значение валидны, то ничего не возвращаем, исключений не бросаем
+    @abstractmethod
+    def PM_Validate(self, xml):
+        pass
+
+    def __init__(self):
+        self.features = {}
+        self.params = {}
+
+    # возращает xml с кофигурацией метода оплаты
+    # реализация --command config
+    def Config(self):
+        config_xml = ET.Element('doc')
+        feature_node = ET.SubElement(config_xml, 'feature')
+        for key, val in self.features.items():
+            ET.SubElement(feature_node, key).text = "on" if val else "off"
+
+        param_node = ET.SubElement(config_xml, 'param')
+        for key, val in self.params.items():
+            ET.SubElement(param_node, key).text = val
+
+        return config_xml
+
+    def Process(self):
         try:
-            options, _ = getopt.getopt(argv, "", longopts)
-        except getopt.GetoptError as err:
-            print(str(err))
-            sys.exit(2)
+            # лайтовый парсинг аргументов командной строки
+            # ожидаем --command <наименование команды>
+            if len(sys.argv) < 3:
+                raise billmgr.exception.XmlException("invalid_arguments")
 
-        for opt, arg in options:
-            if opt == "--command":
-                command = arg
-                logger.info("command " + arg)
+            if sys.argv[1] != "--command":
+                raise Exception("invalid_arguments")
 
-                if command == "config":
-                    config_xml = ET.Element("config")
-                    feature_node = ET.SubElement(config_xml, "feature")
+            command = sys.argv[2]
 
-                    # feature_node.append(ET.Element("refund", "on"))  # If refund supported
-                    # feature_node.append(ET.Element("transfer", "on"))  # If transfer supported
-                    feature_node.append(ET.Element("redirect", "on"))  # If redirect supported
-                    # feature_node.append(ET.Element("noselect", "on"))  # If noselect supported
-                    feature_node.append(ET.Element("notneedprofile", "on"))  # If notneedprofile supported
+            if command == "config":
+                xml = self.Config()
+                if xml is not None:
+                    ET.dump(xml)
 
-                    feature_node.append(ET.Element("pmtune", "on"))
-                    feature_node.append(ET.Element("pmvalidate", "on"))
+            elif command == FEATURE_PMVALIDATE:
+                self.PM_Validate(ET.parse(sys.stdin))
 
-                    # feature_node.append(ET.Element("crtune", "on"))
-                    feature_node.append(ET.Element("crvalidate", "on"))
-                    feature_node.append(ET.Element("crset", "on"))
-                    feature_node.append(ET.Element("crdelete", "on"))
+            elif command == FEATURE_CHECKPAY:
+                self.CheckPay()
 
-                    # feature_node.append(ET.Element("rftune", "on"))
-                    # feature_node.append(ET.Element("rfvalidate", "on"))
-                    # feature_node.append(ET.Element("rfset", "on"))
+        except billmgr.exception.XmlException as exception:
+            sys.stdout.write(exception.as_xml())
 
-                    # feature_node.append(ET.Element("tftune", "on"))
-                    # feature_node.append(ET.Element("tfvalidate", "on"))
-                    # feature_node.append(ET.Element("tfset", "on"))
-
-                    param_node = ET.SubElement(config_xml, "param")
-                    param_node.append(ET.Element("payment_script", "/mancgi/qiwipullpayment.php"))
-
-                    print(ET.tostring(config_xml).decode())
-                elif command == "pmtune":
-                    paymethod_form = ET.fromstring(sys.stdin.read())
-                    pay_source = ET.SubElement(paymethod_form, "slist")
-                    pay_source.set("name", "pay_source")
-                    pay_source.append(ET.Element("msg", "qw"))
-                    pay_source.append(ET.Element("msg", "mobile"))
-                    sys.stdout.write(ET.tostring(paymethod_form).decode())
-                elif command == "pmvalidate":
-                    paymethod_form = ET.fromstring(sys.stdin.read())
-                    logger.debug(ET.tostring(paymethod_form).decode())
-
-                    API_ID = paymethod_form.find("API_ID").text
-                    PRV_ID = paymethod_form.find("PRV_ID").text
-
-                    logger.debug(API_ID)   
-                    logger.debug(PRV_ID)
-
-                    if not re.match("^\d+$", API_ID):
-                        raise Exception("value", "API_ID", API_ID)
-
-                    if not re.match("^\d+$", PRV_ID):
-                        raise Exception("value", "PRV_ID", PRV_ID)
-
-            elif command == "crdelete":
-                payment_id = options['payment']
-                info = db.get_first_record(f"SELECT info FROM payment WHERE id={payment_id}")
-
-                out = requests.post("https://https://securepay.tinkoff.ru/v2/Init/" + info.payment[0].paymethod[1].PRV_ID + "/bills/" + payment_id,
-                                {"status": "rejected"},
-                                info.payment[0].paymethod[1].API_ID,
-                                info.payment[0].paymethod[1].API_PASSWORD)
-
-                out_xml = ET.fromstring(out)
-                if out_xml.result_code == "0" or out_xml.result_code == "210":
-                    db.db_execute(f"DELETE FROM payment WHERE id={payment_id}")
-            elif command == "crvalidate":
-                payment_form = ET.fromstring(sys.stdin.read())
-
-                ok = ET.SubElement(payment_form, "ok")
-                ok.set("type", "5")
-                ok.text = "/mancgi/qiwipullpayment.php?elid=" + payment_form.payment_id
-
-                print(ET.tostring(payment_form).decode())
-            elif command == "crset":
-                payment_id = options['payment']
-                info = db.get_first_record(f"SELECT info FROM payment WHERE id={payment_id}")
-
-                phone = str(info.payment[0].phone)
-                phone = re.sub(r'[^0-9]', '', phone)
-
-                lifetime = datetime.datetime.now()
-                if info.payment[0].paymethod[1].autoclearperiod != "":
-                    lifetime += datetime.timedelta(days=int(info.payment[0].paymethod[1].autoclearperiod))
-                else:
-                    lifetime += datetime.timedelta(days=30)
-
-                input_data = {
-                    "user": "tel:+" + phone,
-                    "amount": str(info.payment[0].paymethodamount),
-                    "ccy": str(info.payment[0].currency[1].iso),
-                    "pay_source": str(info.payment[0].paymethod[1].pay_source),
-                    "prv_name": str(info.payment[0].project.name),
-                    "comment": str(info.payment[0].number),
-                    "lifetime": lifetime.strftime("%Y-%m-%dT%H:%M:%S"),
-                }
-
-                logger.debug(str(input_data))
-
-                out = requests.put("https://qiwi.com/api/v2/prv/" + info.payment[0].paymethod[1].PRV_ID + "/bills/" + payment_id,
-                                input_data,
-                                info.payment[0].paymethod[1].API_ID,
-                                info.payment[0].paymethod[1].API_PASSWORD)
-
-                out_xml = ET.fromstring(out)
-                if out_xml.result_code == "0":
-                    LocalQuery("payment.setinpay", {"elid": payment_id})
-                else:
-                    raise Exception("payment_process_error", "", "", {"error_msg": out_xml.description})
-            else:
-                raise Exception("unknown command")
