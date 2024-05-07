@@ -1,0 +1,15 @@
+2024-05-06 06:06:00,103 [60065] billmgr_db [1;36m Level 15 'SELECT * FROM account'[0m
+2024-05-06 06:09:54,560 [60307] billmgr_db [1;36m Level 15 'SELECT * FROM account'[0m
+2024-05-06 06:13:09,297 [60510] billmgr_db [1;36m Level 15 'SELECT * FROM ipmgr'[0m
+2024-05-06 06:16:20,330 [61355] billmgr_db [1;36m Level 15 'SELECT * FROM nameserver'[0m
+2024-05-06 06:18:33,296 [61444] billmgr_db [1;36m Level 15 'SELECT * FROM user'[0m
+2024-05-06 06:30:53,110 [62070] billmgr_db [1;36m Level 15 'UPDATE user SET email = 'dimaivizov@gmail.com' WHERE id = '1''[0m
+2024-05-06 06:32:03,000 [62156] billmgr_db [1;36m Level 15 'SELECT * FROM user'[0m
+2024-05-06 06:56:30,903 [63073] billmgr_db [1;36m Level 15 'SELECT * FROM user'[0m
+2024-05-06 06:59:56,251 [63210] billmgr_db [1;36m Level 15 'UPDATE user SET level = 29 WHERE id = '5''[0m
+2024-05-06 07:00:04,069 [63352] billmgr_db [1;36m Level 15 'SELECT * FROM user'[0m
+2024-05-06 07:02:31,109 [63430] billmgr_db [1;36m Level 15 'UPDATE user SET password = '$5$Zt1jOXVIcV779NvJ$hJfM.64A2nN2s4kKuBhVbfgRLyhf2iHk6H89NwDidkD' WHERE id = '1''[0m
+2024-05-06 07:02:40,468 [63469] billmgr_db [1;36m Level 15 'SELECT * FROM user'[0m
+2024-05-07 10:35:55,652 [141963] billmgr_db [1;36m Level 15 'SELECT info FROM payment WHERE id=1'[0m
+2024-05-07 10:36:11,692 [142040] billmgr_db [1;36m Level 15 'SELECT info FROM payment'[0m
+2024-05-07 10:36:32,631 [142073] billmgr_db [1;36m Level 15 'SELECT info FROM payment'[0m

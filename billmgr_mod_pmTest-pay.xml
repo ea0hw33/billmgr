@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mgrdata>
+  <plugin name="Test-pay">
+    <group>payment_method</group>
+    <msg name="desc_short" lang="ru">Платежный модуль</msg>
+    <msg name="desc_short" lang="en">Pay module</msg>
+    <msg name="desc_full" lang="ru">Платежный тестовый модуль</msg>
+    <msg name="desc_full" lang="en">Test-pay module</msg>
+  </plugin>
+
+  <metadata name="paymethod.edit.Test-pay" type="form">
+    <form>
+      <page name="methodprops">
+        <field name="prop1">
+          <input name="prop1" required="yes" type="text" />
+        </field>
+        <field name="prop2">
+          <input name="prop2" private="yes" required="yes" type="text" />
+        </field>
+      </page>
+      <page name="recurring">
+        <field name="recurring">
+         <input type="checkbox" name="recurring">
+           <if value="off" hide="recurringprop1"/>
+           <if value="off" hide="recurringprop2"/>
+         </input>
+        </field>
+        <field name="recurringprop1">
+          <input name="recurringprop1" required="yes" type="text" />
+        </field>
+        <field name="recurringprop2">
+          <input name="recurringprop2" private="yes" required="yes" type="text" />
+        </field>
+      </page>
+      <page name="refundpage">
+        <field name="allowrefund">
+         <input type="checkbox" name="allowrefund">
+           <if value="off" hide="refundprop1"/>
+           <if value="off" hide="refundprop2"/>
+         </input>
+        </field>
+        <field name="refundprop1">
+          <input name="refundprop1" required="yes" type="text" />
+        </field>
+        <field name="refundprop2">
+          <input name="refundprop2" private="yes" required="yes" type="text" />
+        </field>
+      </page>
+    </form>
+  </metadata>
+
+  <metadata name="payment.edit.Test-pay" type="form">
+    <form>
+      <field name="payment_prop">
+        <input type="text" name="payment_prop" required="yes"/>
+      </field>
+    </form>
+  </metadata>
+
+  <metadata name="paymethod.transfer.Test-pay" type="form">
+    <form>
+      <field name="param">
+        <input type="text" name="param" required="yes"/>
+      </field>
+    </form>
+  </metadata>
+
+  <lang name="en">
+    <messages name="label_paymethod">
+      <msg name="pmTest-pay">Test-pay module</msg>
+      <msg name="module_pmTest-pay">Test-pay module</msg>
+    </messages>
+
+    <messages name="paymethod.edit.Test-pay">
+      <msg name="prop1">Prop 1</msg>
+      <msg name="hint_prop1">Hint for prop 1</msg>
+      <msg name="prop2">Prop 2</msg>
+      <msg name="hint_prop2">Hint for prop 2</msg>
+
+      <msg name="recurringprop1">Recurring prop 1</msg>
+      <msg name="hint_recurringprop1">Hint for recurring prop 1</msg>
+      <msg name="recurringprop2">Recurring prop 2</msg>
+      <msg name="hint_recurringprop2">Hint for recurring prop 2</msg>
+
+      <msg name="refundprop1">Refund prop 1</msg>
+      <msg name="hint_refundprop1">Hint for refund prop 1</msg>
+      <msg name="refundprop2">Refund prop 2</msg>
+      <msg name="hint_refundprop2">Hint for refund prop 2</msg>
+    </messages>
+
+    <messages name="paymethod.transfer.Test-pay">
+      <msg name="param">Param</msg>
+      <msg name="hint_param">Hint param</msg>
+    </messages>
+
+    <messages name="payment.edit.Test-pay">
+      <msg name="payment_prop">Prop</msg>
+      <msg name="hint_payment_prop">Hint for prop</msg>
+      <msg name="placeholder_payment_prop">prop</msg>
+    </messages>
+  </lang>
+
+  <lang name="ru">
+     <messages name="label_paymethod">
+      <msg name="pmTest-pay">Test-pay модуль</msg>
+      <msg name="module_pmTest-pay">Test-pay модуль</msg>
+    </messages>
+
+    <messages name="paymethod.edit.Test-pay">
+      <msg name="prop1">Свойство 1</msg>
+      <msg name="hint_prop1">Подсказка для свойства 1</msg>
+      <msg name="prop2">Свойствоop 2</msg>
+      <msg name="hint_prop2">Подсказка для свойства 2</msg>
+    </messages>
+
+    <messages name="paymethod.transfer.Test-pay">
+      <msg name="param">Параметр</msg>
+      <msg name="hint_param">Подсказка для параметра</msg>
+    </messages>
+
+    <messages name="payment.edit.Test-pay">
+      <msg name="payment_prop">Свойство</msg>
+      <msg name="hint_payment_prop">Подсказка для свойства</msg>
+      <msg name="placeholder_payment_prop">свойство</msg>
+    </messages>
+  </lang>
+</mgrdata>

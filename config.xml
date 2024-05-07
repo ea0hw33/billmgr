@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doc>
+  <feature>
+    <refund>on</refund>
+    <transfer>on</transfer>
+    <recurring>on</recurring>
+    <redirect>on</redirect>
+    <noselect>on</noselect>
+    <notneedprofile>on</notneedprofile>
+    <pmtune>on</pmtune>
+    <pmvalidate>on</pmvalidate>
+    <crtune>on</crtune>
+    <crvalidate>on</crvalidate>
+    <crset>on</crset>
+    <crdelete>on</crdelete>
+    <rftune>on</rftune>
+    <rfvalidate>on</rfvalidate>
+    <rfset>on</rfset>
+    <rctune>on</rctune>
+    <rcvalidate>on</rcvalidate>
+    <rcset>on</rcset>
+    <rcpay>on</rcpay>
+    <tftune>on</tftune>
+    <tfvalidate>on</tfvalidate>
+    <tfset>on</tfset>
+  </feature>
+  <param>
+    <payment_script>/mancgi/qiwipullpayment.php</payment_script>
+    <recurring_script>/mancgi/qiwipullrecurringpayment.php</recurring_script>
+    <recurring_type></recurring_script>
+  </param>
+</doc>
