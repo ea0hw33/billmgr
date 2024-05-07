@@ -512,3 +512,9 @@
             JOIN paymethod pm
             WHERE module = 'pmtestpayment' AND p.status = 2
         '[0m
+2024-05-07 20:54:01,470 [181419] pmtestpayment [1;32m INFO run checkpay[0m
+2024-05-07 20:54:01,471 [181419] billmgr_db [1;36m EXTINFO '
+            SELECT p.id FROM payment p
+            JOIN paymethod pm
+            WHERE module = 'pmtestpayment' AND p.status = 2
+        '[0m

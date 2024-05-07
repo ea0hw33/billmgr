@@ -2,6 +2,7 @@ import sqlite3
 
 conn = sqlite3.connect('pairs.db')
 
+
 cur = conn.cursor()
 
 # Создание таблицы pairs
